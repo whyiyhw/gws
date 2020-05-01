@@ -50,7 +50,7 @@ func (b *binder) Unbind(conn *Conn) error {
 		}
 	}
 
-	return fmt.Errorf("该连接不在连接 map 中 连接ID为  %s", conn.GetID())
+	return fmt.Errorf("该连接不在连接 map 中")
 }
 
 // FindByID 从 map 中 找到对应的连接

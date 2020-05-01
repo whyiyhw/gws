@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -37,16 +36,6 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 		}
 		return len(p), nil
 	}
-}
-
-// GetID 返回这个连接对应的唯一标识
-func (c *Conn) GetID() string {
-	c.once.Do(func() {
-		u := uuid.New()
-		c.id = u.String()
-	})
-
-	return c.id
 }
 
 // Listen 监听 websocket 连接.  接收数据直到连接被关闭
