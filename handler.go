@@ -2,12 +2,15 @@ package gws
 
 import (
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
+
+var UserID int
 
 // websocketHandler defines to handle websocket upgrade request.
 type websocketHandler struct {
@@ -17,9 +20,14 @@ type websocketHandler struct {
 	// 绑定者 处理 websocket连接与客户端ID 之间的联系
 	binder *binder
 
-	userID int
-
 	mu sync.RWMutex
+
+	// 连接事件
+	onOpen func(conn *Conn, fd int)
+	// 消息接受事件
+	onMessage func(conn *Conn, fd int, message string, err error)
+	// 连接关闭事件
+	onClose func(conn *Conn, fd int)
 }
 
 // RegisterMessage defines message struct client send after connect
@@ -43,23 +51,31 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// handle Websocket request
 	conn := NewConn(wsConn)
+	// 这里才是 open 事件的入口
+	// bind
+
+	if UserID > 10240 {
+		UserID = 0
+	} else {
+		UserID++
+	}
+	_ = wh.binder.Bind(UserID, conn)
+	if wh.onOpen != nil {
+		wh.onOpen(conn, UserID)
+	}
 	conn.AfterReadFunc = func(messageType int, r io.Reader) {
-
-		wh.mu.Lock()
-		defer wh.mu.Unlock()
-
-		userID := wh.userID
-		if userID > 10240 {
-			userID = 0;
-		}else{
-			userID++
+		// 这里是 message 事件
+		if wh.onMessage != nil {
+			p, err := ioutil.ReadAll(r)
+			//_, msg, err := conn.Conn.ReadMessage()
+			wh.onMessage(conn, UserID, string(p), err)
 		}
-
-		// bind
-		_ = wh.binder.Bind(userID, conn)
 	}
 	conn.BeforeCloseFunc = func() {
-		// unbind
+		// unbind 这里是 close  事件
+		if wh.onClose != nil {
+			wh.onClose(conn, UserID)
+		}
 		_ = wh.binder.Unbind(conn)
 	}
 
@@ -70,8 +86,7 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // The userID can't be empty, but event can be empty. The event will be ignored
 // if empty.
 func (wh *websocketHandler) closeConns(userID int) (int, error) {
-	conns,_ := wh.binder.FilterConn(userID)
-
+	conns, _ := wh.binder.FilterConn(userID)
 
 	if err := wh.binder.Unbind(conns); err != nil {
 		log.Printf("conn unbind fail: %v", err)

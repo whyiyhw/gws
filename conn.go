@@ -2,7 +2,6 @@ package gws
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"sync"
@@ -12,14 +11,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Conn wraps websocket.Conn with Conn. It defines to listen and read
-// data from Conn.
+// Conn wraps websocket.Conn with Conn. 定义了监听与 从中读取数据
 type Conn struct {
 	Conn *websocket.Conn
 
 	AfterReadFunc   func(messageType int, r io.Reader)
 	BeforeCloseFunc func()
-	MessageFunc func()
+	MessageFunc     func()
 
 	once   sync.Once
 	id     string
@@ -77,12 +75,11 @@ ReadLoop:
 		default:
 			messageType, r, err := c.Conn.NextReader()
 			if err != nil {
-				// TODO: handle read error maybe
+				// TODO: 需要去处理读取数据错误
+				// 可能会出现 websocket: close 1001 (going away)
+				//fmt.Printf("read msg err %s", err.Error())
 				break ReadLoop
 			}
-
-			_, bytes, _ := c.Conn.ReadMessage()
-			fmt.Println("收到的信息：%s" , string(bytes))
 
 			if c.AfterReadFunc != nil {
 				c.AfterReadFunc(messageType, r)

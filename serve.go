@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	serverDefaultWSPath   = "/ws"
-	serverDefaultAddr     = ":9501"
+	serverDefaultWSPath = "/ws"
+	serverDefaultAddr   = ":9501"
 )
 
 var defaultUpgrade = &websocket.Upgrader{
@@ -35,18 +35,16 @@ type Server struct {
 	// returns true.
 	Upgrader *websocket.Upgrader
 
-
 	wh *websocketHandler
-	//ph *pushHandler
 
-	// 发送事件
-	//OnSend func(fd int, message string) (err error)
 	// 连接事件
-	OnOpen func(conn *websocket.Conn, fd int)
+	OnOpen func(conn *Conn, fd int)
 	// 消息接受事件
-	OnMessage func(conn *websocket.Conn, fd int, message string)
+	OnMessage func(conn *Conn, fd int, message string, err error)
 	// 连接关闭事件
-	OnClose func(conn *websocket.Conn, fd int)
+	OnClose func(conn *Conn, fd int)
+
+	Send func(conn *Conn, fd int, message string) (err error)
 }
 
 //ListenAndServe 监听tcp 连接并处理  websocket 请求
@@ -55,11 +53,21 @@ func (s *Server) ListenAndServe() error {
 		userID2ConnMap: make(map[int]*Conn),
 	}
 
-	// websocket request handler
+	// websocket 请求处理结构体
 	wh := websocketHandler{
 		upgrader: defaultUpgrade,
 		binder:   b,
 	}
+	if s.OnClose != nil {
+		wh.onClose = s.OnClose
+	}
+	if s.OnMessage != nil {
+		wh.onMessage = s.OnMessage
+	}
+	if s.OnOpen != nil {
+		wh.onOpen = s.OnOpen
+	}
+
 	if s.Upgrader != nil {
 		wh.upgrader = s.Upgrader
 	}
@@ -72,7 +80,6 @@ func (s *Server) ListenAndServe() error {
 	}
 	s.wh = &wh
 	http.Handle(s.WSPath, s.wh)
-
 
 	return http.ListenAndServe(s.Addr, nil)
 }
