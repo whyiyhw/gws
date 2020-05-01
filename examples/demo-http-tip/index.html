@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh_cn">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>WebSocket Push Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <div class="content"></div>
+
+    <script>
+        let wsuri = "ws://127.0.0.1:9501/ws";
+
+        let insert = "<p>Start connecting " + wsuri + "</p>";
+        document.getElementsByClassName("content")[0].innerHTML += insert;
+
+        let sock = new WebSocket(wsuri);
+        sock.onopen = function () {
+            console.log("connected to " + wsuri);
+            let insert = "<p>Connected to " + wsuri + " success</p>";
+            document.getElementsByClassName("content")[0].innerHTML += insert;
+
+            sock.send("this websocket test");
+            insert = "<p>message sent</p>";
+            document.getElementsByClassName("content")[0].innerHTML += insert;
+        };
+        sock.onclose = function (e) {
+            console.log("connection closed (" + e.code + ")");
+            const insert = "<p>Connection be closed</p>";
+            document.getElementsByClassName("content")[0].innerHTML += insert;
+        };
+        sock.onmessage = function (e) {
+            console.log("Receive message: " + e.data);
+
+            let insert = "<p>Receive: " + e.data + "</p>";
+            document.getElementsByClassName("content")[0].innerHTML += insert;
+        };
+    </script>
+</body>
+
+</html>

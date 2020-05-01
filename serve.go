@@ -41,6 +41,8 @@ type Server struct {
 	OnMessage func(conn *Conn, fd int, message string, err error)
 	// 连接关闭事件
 	OnClose func(conn *Conn, fd int)
+
+	OnHttp []*HttpHandler
 }
 
 //ListenAndServe 监听tcp 连接并处理  websocket 请求
@@ -76,6 +78,14 @@ func (s *Server) ListenAndServe() error {
 	}
 	s.wh = &wh
 	http.Handle(s.WSPath, s.wh)
+
+	// 新增 http 请求的处理
+	if len(s.OnHttp) > 0 {
+		for _, v := range s.OnHttp {
+			// v.bind = b 内部不提供对外开放的接口 让外部自行解决，避免内部关系错乱
+			http.Handle(v.Path, v.DealFunc)
+		}
+	}
 
 	return http.ListenAndServe(s.Addr, nil)
 }

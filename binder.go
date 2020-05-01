@@ -68,7 +68,7 @@ func (b *binder) FindByID(userID int) (c *Conn, err error) {
 
 }
 
-//FindIDByConn 通过连接去找 ID
+// FindIDByConn 通过连接去找 ID
 func (b *binder) FindIDByConn(conn *Conn) (userID int, err error) {
 
 	b.mu.RLock()
@@ -83,4 +83,10 @@ func (b *binder) FindIDByConn(conn *Conn) (userID int, err error) {
 	err = errors.New("该链接不存在，或已失效")
 	return
 
+}
+
+// GetAllBindConn 获取所有 绑定关系
+func (b *binder) GetAllBindConn() map[int]*Conn {
+
+	return b.userID2ConnMap
 }

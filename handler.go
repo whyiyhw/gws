@@ -91,3 +91,14 @@ func (wh *websocketHandler) closeConn(userID int) (int, error) {
 
 	return 1, nil
 }
+
+// pushHandler defines to handle push message request.
+type HttpHandler struct {
+	Path string
+	//binder *binder 内部不提供 对于 内部关系的外部接口
+	DealFunc http.HandlerFunc
+}
+
+//func (h *HttpHandler) GetBinder() *binder {
+//	return h.binder
+//}
