@@ -11,25 +11,25 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Conn wraps websocket.Conn with Conn. 定义了监听与 从中读取数据
+// 定义了监听 与 从 websocket 中读取数据 的结构体
 type Conn struct {
 	Conn *websocket.Conn
 
 	AfterReadFunc   func(messageType int, r io.Reader)
 	BeforeCloseFunc func()
-	MessageFunc     func()
 
 	once   sync.Once
 	id     string
 	stopCh chan struct{}
 }
 
-// Write write p to the websocket connection. The error returned will always
-// be nil if success.
+// 往对应的连接中写入 UTF8 字符
+// 成功返回对应 byte 的长度
+// 失败返回 err
 func (c *Conn) Write(p []byte) (n int, err error) {
 	select {
 	case <-c.stopCh:
-		return 0, errors.New("Conn is closed, can't be written")
+		return 0, errors.New("连接已关闭, 写入失败")
 	default:
 		err = c.Conn.WriteMessage(websocket.TextMessage, p)
 		if err != nil {
@@ -39,7 +39,7 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 	}
 }
 
-// GetID returns the id generated using UUID algorithm.
+// GetID 返回这个连接对应的唯一标识
 func (c *Conn) GetID() string {
 	c.once.Do(func() {
 		u := uuid.New()
@@ -49,8 +49,7 @@ func (c *Conn) GetID() string {
 	return c.id
 }
 
-// Listen listens for receive data from websocket connection. It blocks
-// until websocket connection is closed.
+// Listen 监听 websocket 连接.  接收数据直到连接被关闭
 func (c *Conn) Listen() {
 	c.Conn.SetCloseHandler(func(code int, text string) error {
 		if c.BeforeCloseFunc != nil {
@@ -66,7 +65,6 @@ func (c *Conn) Listen() {
 		return nil
 	})
 
-	// Keeps reading from Conn util get error.
 ReadLoop:
 	for {
 		select {
@@ -88,11 +86,11 @@ ReadLoop:
 	}
 }
 
-// Close close the connection.
+// Close 主动关闭连接
 func (c *Conn) Close() error {
 	select {
 	case <-c.stopCh:
-		return errors.New("Conn already been closed")
+		return errors.New("连接已关闭")
 	default:
 		_ = c.Conn.Close()
 		close(c.stopCh)
@@ -100,7 +98,7 @@ func (c *Conn) Close() error {
 	}
 }
 
-// NewConn wraps conn.
+// NewConn 新增对应连接
 func NewConn(conn *websocket.Conn) *Conn {
 	return &Conn{
 		Conn:   conn,

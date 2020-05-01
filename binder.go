@@ -6,36 +6,26 @@ import (
 	"sync"
 )
 
-// eventConn wraps Conn with a specified event type.
-type eventConn struct {
-	Event string
-	Conn  *Conn
-}
-
-// binder is defined to store the relation of userID and eventConn
+// binder 为 生成与解绑 id 与 conn 之间关系 的结构体
 type binder struct {
 	mu sync.RWMutex
 
-	// map stores key: userID and value of related slice of eventConn
+	// userID 跟 连接的 map
 	userID2ConnMap map[int]*Conn
-
 }
 
-// Bind binds userID with eConn specified by event. It fails if the
-// return error is not nil.
+// Bind 绑定 userID 跟 对应的连接
 func (b *binder) Bind(userID int, conn *Conn) error {
 
-
 	if conn == nil {
-		return errors.New("conn can't be nil")
+		return errors.New("连接不能为空")
 	}
 
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	// map the eConn if it isn't be put.
 	if _, ok := b.userID2ConnMap[userID]; ok {
-		// 如果维持了超过 10240 个链接，那么对于重复 链接 怎么处理？
+		// 该userID 对应的连接已存在
 		return nil
 	} else {
 		b.userID2ConnMap[userID] = conn
@@ -44,10 +34,10 @@ func (b *binder) Bind(userID int, conn *Conn) error {
 	return nil
 }
 
-// Unbind unbind and removes Conn if it's exist.
+// Unbind 解绑 userID 跟 对应的连接
 func (b *binder) Unbind(conn *Conn) error {
 	if conn == nil {
-		return errors.New("conn can't be empty")
+		return errors.New("连接不能为空")
 	}
 
 	b.mu.Lock()
@@ -60,22 +50,20 @@ func (b *binder) Unbind(conn *Conn) error {
 		}
 	}
 
-	return fmt.Errorf("can't find the conn of ID: %s", conn.GetID())
+	return fmt.Errorf("该连接不在连接 map 中 连接ID为  %s", conn.GetID())
 }
 
-// FilterConn searches the conns related to userID, and filtered by
-// event. The userID can't be empty. The event will be ignored if it's empty.
-// All the conns related to the userID will be returned if the event is empty.
-func (b *binder) FilterConn(userID int) (*Conn, error) {
+// FindByID 从 map 中 找到对应的连接
+func (b *binder) FindByID(userID int) (c *Conn, err error) {
 
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	if eConns, ok := b.userID2ConnMap[userID]; ok {
-
-		return eConns, nil
-	}else{
-		//TODO 需要去处理
-		return eConns, nil
+	if c, ok := b.userID2ConnMap[userID]; ok {
+		return c, nil
 	}
+
+	err = errors.New("该链接不存在，或已失效")
+	return
+
 }

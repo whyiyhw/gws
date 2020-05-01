@@ -27,12 +27,10 @@ type Server struct {
 	// 定义 websocket 服务的路由 , 默认 "/ws".
 	WSPath string
 
-	// Upgrader is for upgrade connection to websocket connection using
+	// websocket 的升级主要通过 以下 包来实现
 	// "github.com/gorilla/websocket".
 	//
-	// If Upgrader is nil, default upgrader will be used. Default upgrader is
-	// set ReadBufferSize and WriteBufferSize to 1024, and CheckOrigin always
-	// returns true.
+	// 默认的 upgrader  ReadBufferSize 和 WriteBufferSize 都是 1024  CheckOrigin 方法 为不检查
 	Upgrader *websocket.Upgrader
 
 	wh *websocketHandler

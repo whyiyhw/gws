@@ -10,7 +10,7 @@ func main() {
 
 	server.OnMessage = func(conn *gws.Conn, fd int, message string, err error) {
 
-		// 给对应的 连接发 消息
+		// 接入后给对应的 连接发 消息
 		// response := fmt.Sprintf("had recv you message: %s    : by server default info", message)
 		//_, _ = conn.Write([]byte(response))
 

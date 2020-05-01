@@ -86,7 +86,7 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // The userID can't be empty, but event can be empty. The event will be ignored
 // if empty.
 func (wh *websocketHandler) closeConns(userID int) (int, error) {
-	conns, _ := wh.binder.FilterConn(userID)
+	conns, _ := wh.binder.FindByID(userID)
 
 	if err := wh.binder.Unbind(conns); err != nil {
 		log.Printf("conn unbind fail: %v", err)
