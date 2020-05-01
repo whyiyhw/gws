@@ -30,13 +30,6 @@ type websocketHandler struct {
 	onClose func(conn *Conn, fd int)
 }
 
-// RegisterMessage defines message struct client send after connect
-// to the server.
-type RegisterMessage struct {
-	Token string
-	Event string
-}
-
 // 首先尝试去升级连接为 websocket协议，如果 success, 长连接会一直保活下去
 // 直到客户端发送关闭 信息，或者 服务端主动 drop 掉
 func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -61,20 +54,25 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = wh.binder.Bind(UserID, conn)
 	if wh.onOpen != nil {
-		wh.onOpen(conn, UserID)
+		userID, _ := wh.binder.FindIDByConn(conn)
+		wh.onOpen(conn, userID)
 	}
 	conn.AfterReadFunc = func(messageType int, r io.Reader) {
 		// 这里是 message 事件
 		if wh.onMessage != nil {
 			p, err := ioutil.ReadAll(r)
 			//_, msg, err := conn.Conn.ReadMessage()
-			wh.onMessage(conn, UserID, string(p), err)
+			userID, _ := wh.binder.FindIDByConn(conn)
+			wh.onMessage(conn, userID, string(p), err)
 		}
 	}
 	conn.BeforeCloseFunc = func() {
 		// unbind 这里是 close  事件
 		if wh.onClose != nil {
-			wh.onClose(conn, UserID)
+			// 此时的 userID 不是当时的  userID 了
+			// 需要根据 conn 获取 userID
+			userID, _ := wh.binder.FindIDByConn(conn)
+			wh.onClose(conn, userID)
 		}
 		_ = wh.binder.Unbind(conn)
 	}
@@ -82,10 +80,8 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn.Listen()
 }
 
-// closeConns unbind conns filtered by userID and event and close them.
-// The userID can't be empty, but event can be empty. The event will be ignored
-// if empty.
-func (wh *websocketHandler) closeConns(userID int) (int, error) {
+// closeConn 通过 userID 去解绑 conn
+func (wh *websocketHandler) closeConn(userID int) (int, error) {
 	conns, _ := wh.binder.FindByID(userID)
 
 	if err := wh.binder.Unbind(conns); err != nil {

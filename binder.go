@@ -67,3 +67,20 @@ func (b *binder) FindByID(userID int) (c *Conn, err error) {
 	return
 
 }
+
+//FindIDByConn 通过连接去找 ID
+func (b *binder) FindIDByConn(conn *Conn) (userID int, err error) {
+
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	for userID, c := range b.userID2ConnMap {
+		if c == conn {
+			return userID, nil
+		}
+	}
+
+	err = errors.New("该链接不存在，或已失效")
+	return
+
+}

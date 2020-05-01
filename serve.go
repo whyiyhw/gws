@@ -41,8 +41,6 @@ type Server struct {
 	OnMessage func(conn *Conn, fd int, message string, err error)
 	// 连接关闭事件
 	OnClose func(conn *Conn, fd int)
-
-	Send func(conn *Conn, fd int, message string) (err error)
 }
 
 //ListenAndServe 监听tcp 连接并处理  websocket 请求
