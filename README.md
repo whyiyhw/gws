@@ -49,7 +49,7 @@
 
 - 修复主动关闭时未触发关闭事件的 Bug
 - 增加通用的消息推送架构设计图
-- ![websocket](.\websocket.png)
+- ![websocket](websocket.png)
 
 都看到这里了 给个 💖 吧
 
