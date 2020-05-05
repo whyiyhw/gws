@@ -81,6 +81,10 @@ func (c *Conn) Close() error {
 	case <-c.stopCh:
 		return errors.New("连接已关闭")
 	default:
+		// fix 修复 主动删除也会触发 删除之前的回调函数
+		if c.BeforeCloseFunc != nil {
+			c.BeforeCloseFunc()
+		}
 		_ = c.Conn.Close()
 		close(c.stopCh)
 		return nil
