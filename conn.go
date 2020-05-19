@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -17,8 +16,6 @@ type Conn struct {
 	AfterReadFunc   func(messageType int, r io.Reader)
 	BeforeCloseFunc func()
 
-	once   sync.Once
-	id     string
 	stopCh chan struct{}
 }
 
@@ -45,7 +42,7 @@ func (c *Conn) Listen() {
 			c.BeforeCloseFunc()
 		}
 
-		if err := c.Close(); err != nil {
+		if err := c.close(); err != nil {
 			log.Println(err)
 		}
 
@@ -75,19 +72,16 @@ ReadLoop:
 	}
 }
 
-// Close 主动关闭连接
-func (c *Conn) Close() error {
+// close 主动关闭连接
+func (c *Conn) close() error {
 	select {
 	case <-c.stopCh:
 		return errors.New("连接已关闭")
 	default:
-		// fix 修复 主动删除也会触发 删除之前的回调函数
-		if c.BeforeCloseFunc != nil {
-			c.BeforeCloseFunc()
-		}
-		_ = c.Conn.Close()
+		// 不允许主动调用 Close 方法 通过 conn.Close 调用 再通过回调函数进行调用
+		err := c.Conn.Close()
 		close(c.stopCh)
-		return nil
+		return err
 	}
 }
 

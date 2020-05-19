@@ -18,7 +18,7 @@ type binder struct {
 func (b *binder) Bind(userID int, conn *Conn) error {
 
 	if conn == nil {
-		return errors.New("连接不能为空")
+		return errors.New("绑定失败：连接不能为空")
 	}
 
 	b.mu.Lock()
@@ -26,7 +26,7 @@ func (b *binder) Bind(userID int, conn *Conn) error {
 
 	if _, ok := b.userID2ConnMap[userID]; ok {
 		// 该userID 对应的连接已存在
-		return nil
+		return errors.New(fmt.Sprintf("绑定失败：该 userID %d 对应的连接已存在", userID))
 	} else {
 		b.userID2ConnMap[userID] = conn
 	}

@@ -1,6 +1,7 @@
 package gws
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,7 +15,7 @@ var UserID int
 
 // websocketHandler defines to handle websocket upgrade request.
 type websocketHandler struct {
-	// upgrader is used to upgrade request.
+	// upgrader 是需要去升级的请求
 	upgrader *websocket.Upgrader
 
 	// 绑定者 处理 websocket连接与客户端ID 之间的联系
@@ -42,39 +43,59 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_ = wsConn.Close()
 	}()
 
-	// handle Websocket request
+	// 处理 Websocket 请求
 	conn := NewConn(wsConn)
-	// 这里才是 open 事件的入口
-	// bind
 
-	if UserID > 10240 {
-		UserID = 0
+	if UserID > 1024000 {
+		UserID = 1
 	} else {
 		UserID++
 	}
-	_ = wh.binder.Bind(UserID, conn)
+	err = wh.binder.Bind(UserID, conn)
+	if err != nil {
+		fmt.Println(err.Error())
+		return // 不再进行下一步操作
+	}
 	if wh.onOpen != nil {
-		userID, _ := wh.binder.FindIDByConn(conn)
+		userID, err := wh.binder.FindIDByConn(conn)
+		if err != nil {
+			fmt.Println("open 事件", err.Error())
+			return // 不再进行下一步操作
+		}
 		wh.onOpen(conn, userID)
 	}
 	conn.AfterReadFunc = func(messageType int, r io.Reader) {
 		// 这里是 message 事件
 		if wh.onMessage != nil {
 			p, err := ioutil.ReadAll(r)
-			//_, msg, err := conn.Conn.ReadMessage()
-			userID, _ := wh.binder.FindIDByConn(conn)
+			if err != nil {
+				fmt.Println("message 读取data 失败", err.Error())
+				return // 不再进行下一步操作
+			}
+			userID, err := wh.binder.FindIDByConn(conn)
+			if err != nil {
+				fmt.Println("message 事件", err.Error())
+				return // 不再进行下一步操作
+			}
 			wh.onMessage(conn, userID, string(p), err)
 		}
 	}
 	conn.BeforeCloseFunc = func() {
 		// unbind 这里是 close  事件
 		if wh.onClose != nil {
-			// 此时的 userID 不是当时的  userID 了
 			// 需要根据 conn 获取 userID
-			userID, _ := wh.binder.FindIDByConn(conn)
+			userID, err := wh.binder.FindIDByConn(conn)
+			if err != nil {
+				fmt.Println("close 事件 获取 userID 失败", err.Error())
+				return // 不再进行下一步操作
+			}
 			wh.onClose(conn, userID)
 		}
-		_ = wh.binder.Unbind(conn)
+		err = wh.binder.Unbind(conn)
+		if err != nil {
+			fmt.Println("close 事件 解绑失败", err.Error())
+			return // 不再进行下一步操作
+		}
 	}
 
 	conn.Listen()
@@ -92,13 +113,8 @@ func (wh *websocketHandler) closeConn(userID int) (int, error) {
 	return 1, nil
 }
 
-// pushHandler defines to handle push message request.
+// HttpHandler 定义http处理 func
 type HttpHandler struct {
-	Path string
-	//binder *binder 内部不提供 对于 内部关系的外部接口
+	Path     string
 	DealFunc http.HandlerFunc
 }
-
-//func (h *HttpHandler) GetBinder() *binder {
-//	return h.binder
-//}
