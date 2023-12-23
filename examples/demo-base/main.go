@@ -11,7 +11,7 @@ func main() {
 	server.OnMessage = func(conn *gws.Conn, fd int, message string, err error) {
 
 		// 接入后给对应的 连接发 消息
-		// response := fmt.Sprintf("had recv you message: %s    : by server default info", message)
+		//response := fmt.Sprintf("had receive you message: %s   : by server default info", message)
 		//_, _ = conn.Write([]byte(response))
 
 		fmt.Printf("client %d said %s \n", fd, message)

@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/whyiyhw/gws"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/whyiyhw/gws"
 )
 
 func main() {
@@ -15,7 +17,7 @@ func main() {
 	server.OnMessage = func(conn *gws.Conn, fd int, message string, err error) {
 
 		// 接入后给对应的 连接发 消息
-		// response := fmt.Sprintf("had recv you message: %s    : by server default info", message)
+		// response := fmt.Sprintf("had receive you message: %s    : by server default info", message)
 		//_, _ = conn.Write([]byte(response))
 
 		fmt.Printf("client %d said %s \n", fd, message)
@@ -37,8 +39,9 @@ func main() {
 	s.DealFunc = func(w http.ResponseWriter, r *http.Request) {
 		// 这里因为没有
 		for _, c := range Relation {
-			_, _ = c.Write([]byte("this is come from http request info"))
+			_, _ = c.Write([]byte("this is come from http request info" + time.Now().String()))
 		}
+		fmt.Printf("http request comein \n")
 		_, _ = io.WriteString(w, fmt.Sprintf("success send message to all %d client msg", len(Relation)))
 	}
 

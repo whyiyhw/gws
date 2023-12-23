@@ -1,9 +1,9 @@
 package gws
 
 import (
-	"github.com/gorilla/websocket"
-
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -19,7 +19,7 @@ var defaultUpgrade = &websocket.Upgrader{
 	},
 }
 
-//Server 定义运行 websocket 服务 所需的参数
+// Server 定义运行 websocket 服务 所需的参数
 type Server struct {
 	// 定义服务监听端口
 	Addr string
@@ -45,7 +45,7 @@ type Server struct {
 	OnHttp []*HttpHandler
 }
 
-//ListenAndServe 监听tcp 连接并处理  websocket 请求
+// ListenAndServe 监听tcp 连接并处理  websocket 请求
 func (s *Server) ListenAndServe() error {
 	b := &binder{
 		userID2ConnMap: make(map[int]*Conn),

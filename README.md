@@ -38,7 +38,6 @@
 	if err := s.ListenAndServe(); err != nil {
 		panic(err)
 	}
-
 ```
 
 - 再使用 浏览器工具栏 连接 `ws://127.0.0.1:9501/ws` 就可以愉快的玩耍了~
@@ -49,7 +48,9 @@
 
 - 修复主动关闭时未触发关闭事件的 Bug
 - 增加通用的消息推送架构设计图
-- ![websocket](websocket.png)
+- ![websocket](examples/websocket.png)
+
+`v0.0.3` 版本 依赖升级，补充了小型项目可直接使用的demo
 
 都看到这里了 给个 💖 吧
 

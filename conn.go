@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// 定义了监听 与 从 websocket 中读取数据 的结构体
+// Conn 定义了监听 与 从 websocket 中读取数据 的结构体
 type Conn struct {
 	Conn *websocket.Conn
 

@@ -3,7 +3,6 @@ package gws
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -67,7 +66,7 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn.AfterReadFunc = func(messageType int, r io.Reader) {
 		// 这里是 message 事件
 		if wh.onMessage != nil {
-			p, err := ioutil.ReadAll(r)
+			p, err := io.ReadAll(r)
 			if err != nil {
 				fmt.Println("message 读取data 失败", err.Error())
 				return // 不再进行下一步操作
